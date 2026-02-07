@@ -33,8 +33,15 @@ use App\Http\Controllers\Customer\ReviewController;
 //     [CoffeeLoginController::class,'login']
 // )->name('coffee.login');
 
-Route::get('/login', [CoffeeLoginController::class,'showLogin'])->name('login');
-Route::post('/coffee-login',[CoffeeLoginController::class,'login'])->name('coffee.login');
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+
+Route::get('/login', [CoffeeLoginController::class,'showLogin'])
+    ->name('login');
+
+Route::post('/coffee-login',[CoffeeLoginController::class,'login'])
+    ->name('coffee.login');
 
 Route::post('/logout', function(){
     Auth::logout();
