@@ -1,49 +1,39 @@
-FROM php:8.2-fpm
+FROM php:8.2-apache
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    unzip \
-    zip \
     libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
     libzip-dev \
     libonig-dev \
     libxml2-dev \
-    libicu-dev \
-    libpq-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
-        pdo \
-        pdo_pgsql \
-        pgsql \
-        zip \
-        gd \
-        intl
+    unzip \
+    zip \
+    git \
+    curl \
+    && docker-php-ext-install pdo pdo_pgsql mbstring zip exif pcntl bcmath gd
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Enable Apache rewrite
+RUN a2enmod rewrite
 
 # Set working directory
-WORKDIR /var/www
+WORKDIR /var/www/html
 
 # Copy project
 COPY . .
 
-# Install Laravel dependencies
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Generate app key (temporary)
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
+# Apache config for Laravel
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
-# Expose port
-EXPOSE 8000
+EXPOSE 80
 
-# CMD php artisan config:clear && \
-#     php artisan route:clear && \
-#     php artisan view:clear && \
-#     php artisan migrate --force && \
-   
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+CMD ["apache2-foreground"]
