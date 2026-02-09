@@ -27,6 +27,9 @@ COPY . .
 
 # Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
+RUN php artisan config:clear
+RUN php artisan cache:clear
+RUN php artisan config:cache
 
 # Set Apache document root to public
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
